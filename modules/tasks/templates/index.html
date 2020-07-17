@@ -1,0 +1,110 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" crossorigin="anonymous">
+        <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
+        <title>Task Manager</title>
+        <style>
+            .fast .toggle-group { transition: left 0.1s; -webkit-transition: left 0.1s; }
+        </style>
+    </head>
+    <body>
+        <div class="container-fluid text-dark">
+
+            <div class="row bg-light pl-5 pr-5 pt-1 pb-1 mb-3">
+                <div class="col-8 offset-2">
+                    <div class="form-group mt-3">
+                        <input autoComplete="off" name="task" type="text" class="form-control" placeholder="Task to be done.."/>
+                        <small class="form-text text-muted text-center"><b>🛎️ Tip:</b> Please press <kbd>↵</kbd> key to automaticly create a task.</small>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-6 offset-3">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <div class="text-center" style="min-width: 80px; align-self: center;"><input type="checkbox" data-toggle="toggle" data-on="<b>&check;</b>" data-onstyle="success" data-off="&check;" data-style="fast" /></div>
+                                <div class="pl-3 pr-3" style="text-align: justify;">Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium.</div>
+                                <div class="text-center" style="border-left:1px solid whitesmoke; min-width: 100px; align-self: center;"><small>1 minute ago.</small><br/><button type="button" class="btn btn-sm btn-link btn-delete"><small>Delete</small></button></div>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <div class="text-center" style="min-width: 80px; align-self: center;"><input type="checkbox" data-toggle="toggle" data-on="<b>&check;</b>" data-onstyle="success" data-off="&check;" data-style="fast" /></div>
+                                <div class="pl-3 pr-3" style="text-align: justify;">Li Europan lingues es membres del sam familie. Lor separat existentie es un myth. Por scientie, musica, sport etc, litot Europa usa li sam vocabular. Li lingues differe solmen in li grammatica, li pronunciation e li plu commun vocabules.</div>
+                                <div class="text-center" style="border-left:1px solid whitesmoke; min-width: 100px; align-self: center;"><small>3 hours ago.</small><br/><button type="button" class="btn btn-sm btn-link btn-delete"><small>Delete</small></button></div>
+                            </div>
+                        </li>
+                        <li class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <div class="text-center" style="min-width: 80px; align-self: center;"><input type="checkbox" checked data-toggle="toggle" data-on="<b>&check;</b>" data-onstyle="success" data-off="&check;" data-style="fast" /></div>
+                                <div class="pl-3 pr-3" style="text-align: justify;"><del>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</del></div>
+                                <div class="text-center" style="border-left:1px solid whitesmoke; min-width: 100px; align-self: center;"><small>1 day ago.</small><br/><button type="button" class="btn btn-sm btn-link btn-delete"><small>Delete</small></button></div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
+        <script type="text/javascript">
+
+            jQuery.each( [ "put", "delete" ], function( i, method ) {
+                jQuery[ method ] = function( url, data, callback, type ) {
+                    if ( jQuery.isFunction( data ) ) {
+                        type = type || callback;
+                        callback = data;
+                        data = undefined;
+                    }
+
+                    return jQuery.ajax({
+                        url: url,
+                        type: method,
+                        dataType: type,
+                        data: data,
+                        success: callback
+                    });
+                };
+            });
+
+            $(document).ready(function(){
+
+                $('.btn-delete').on('click', function(){
+                    $that = $(this);
+                    if(confirm("Are you sure ?")){
+                        $.delete( "/tasks/", {})
+                        .done(function( data ) {
+                            $that.val('');
+                        });
+                    }
+                    return false;
+                });
+
+                $('input[name="task"]').keypress(function(event){
+                    $that = $(this);
+                    var keycode = (event.keyCode ? event.keyCode : event.which);
+                    if(keycode == '13'){
+                        $.post( "/tasks/", { task: $that.val() })
+                        .done(function( data ) {
+                            $that.val('');
+                        });
+                    }
+                });
+
+            });
+        </script>
+    </body>
+</html>

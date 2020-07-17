@@ -1,0 +1,15 @@
+Case Study için yarım kalmış bir projeyi tamamlamanızı isteyeceğiz. Proje basitçe kişinin yapacağı işleri takip etmesini sağlamalı.
+
+Uygulamadan beklentimiz;
+- yeni bir iş/madde girişi yapılabilmesi,
+- girilmiş olan işin/maddenin bitip, bitmediğinin işaretlenebilmesi ve gerektiğinde bitişin geri alınabilmesi,
+- girilmiş olan işin/maddenin silinebilmesi,
+- girilmiş olan işin/maddenin birden fazla olmak kaydı ile etiketlenebilmesi (Tag),
+- girilmiş olan maddelerin, istenildiği anda PDF formatında çıktısının alınabilmesi,
+- birden fazla kullanıcının bu uygulamayı kullanabilmesi (herkes kendi girdiği maddeleri görecek şekilde),
+olacak.
+
+Uygulamayı geliştirirken;
+- front-end için React JS kullanmak,
+- back-end için DRF kullanmak,
+bir artı olarak değerlendirilecektir. React JS veya DRF kullanmak zorunda değilsiniz, isterseniz şu anki yapısında da geliştirmelerinizi gerçekleştirebilirsiniz.
