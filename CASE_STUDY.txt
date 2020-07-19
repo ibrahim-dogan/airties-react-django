@@ -4,6 +4,7 @@ Uygulamadan beklentimiz;
 - yeni bir iş/madde girişi yapılabilmesi,
 - girilmiş olan işin/maddenin bitip, bitmediğinin işaretlenebilmesi ve gerektiğinde bitişin geri alınabilmesi,
 - girilmiş olan işin/maddenin silinebilmesi,
+
 - girilmiş olan işin/maddenin birden fazla olmak kaydı ile etiketlenebilmesi (Tag),
 - girilmiş olan maddelerin, istenildiği anda PDF formatında çıktısının alınabilmesi,
 - birden fazla kullanıcının bu uygulamayı kullanabilmesi (herkes kendi girdiği maddeleri görecek şekilde),

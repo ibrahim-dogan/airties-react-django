@@ -1,5 +1,3 @@
-{% load static %}
-
 <!doctype html>
 <html lang="en">
     <head>
@@ -82,10 +80,29 @@
 
             $(document).ready(function(){
 
+                function getTasks(){
+                    $.get( "/api/tasks/")
+                        .done(function( data ) {
+                            data.forEach(f)
+                        });
+
+                    var template = `
+                    <li class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <div class="text-center" style="min-width: 80px; align-self: center;"><input type="checkbox" data-toggle="toggle" data-on="<b>&check;</b>" data-onstyle="success" data-off="&check;" data-style="fast" /></div>
+                                <div class="pl-3 pr-3" style="text-align: justify;">Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium.</div>
+                                <div class="text-center" style="border-left:1px solid whitesmoke; min-width: 100px; align-self: center;"><small>1 minute ago.</small><br/><button type="button" class="btn btn-sm btn-link btn-delete"><small>Delete</small></button></div>
+                            </div>
+                        </li>
+                    `
+                }
+
+                getTasks()
+
                 $('.btn-delete').on('click', function(){
                     $that = $(this);
                     if(confirm("Are you sure ?")){
-                        $.delete( "/tasks/", {})
+                        $.delete( "/api/tasks/", {})
                         .done(function( data ) {
                             $that.val('');
                         });
@@ -97,7 +114,7 @@
                     $that = $(this);
                     var keycode = (event.keyCode ? event.keyCode : event.which);
                     if(keycode == '13'){
-                        $.post( "/tasks/", { task: $that.val() })
+                        $.post( "/api/tasks/", { task: $that.val() })
                         .done(function( data ) {
                             $that.val('');
                         });
