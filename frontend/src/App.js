@@ -17,6 +17,7 @@ class App extends Component {
         super(props);
         this.state = {
             newTaskInput: '',
+            filter: 'all',
             todoList: []
         };
     }
@@ -32,7 +33,11 @@ class App extends Component {
             .catch(err => console.log(err));
     };
     renderItems = () => {
-        const {todoList} = this.state;
+        let {todoList} = this.state;
+        if (this.state.filter !== 'all')
+            todoList = todoList.filter((todo) => {
+                return todo.task.includes(this.state.filter)
+            });
         return todoList.map(item => (
 
             <li key={item.id} className="list-group-item d-flex justify-content-between align-items-center">
@@ -46,7 +51,9 @@ class App extends Component {
                             onChange={() => this.handleDone(item)}
                         />
                     </div>
-                    <div className={`pl-3 pr-3 ${item.is_completed ? 'line-through' : ''}`}>{item.task}</div>
+                    <div className={`pl-3 pr-3 ${item.is_completed ? 'line-through' : ''}`}>
+                        {this.renderTask(item.task)}
+                    </div>
                     <div className="text-center time-ago">
                         <small>{timeAgo.format(new Date(item.created_at))}</small><br/>
                         <button type="button" className="btn btn-sm btn-link btn-delete"
@@ -55,6 +62,36 @@ class App extends Component {
 
                 </div>
             </li>
+        ));
+    };
+    renderTags = () => {
+        const {todoList} = this.state;
+        let tags = [];
+        todoList.forEach(item => {
+            const taskTags = item.task.match(/#\w[^!\W]+/g);
+            console.log(taskTags);
+            if (taskTags)
+                tags.push(...taskTags);
+        });
+        tags = new Set(tags);
+        tags = [...tags];
+        return tags.map((tag, index) => (
+            <button key={index} className={`ml-1 btn btn-sm btn-outline-primary ${this.state.filter === tag ? 'active' : ''}`}
+                    onClick={() => this.setState({filter: tag})}>{tag}
+            </button>
+        ));
+    };
+    renderTask = (task) => {
+        // const taskTags = task.match(/(?<hashtag>#\w[^!\W]+)|(?<nonhashtag>\w[^!\W]+)/g);
+        const taskTags = task.split(' ');
+
+        return taskTags.map((token, index) => (
+            token.includes('#') ?
+                <a className='mr-1 text-primary cursor-pointer'
+                   key={index}
+                   onClick={() => this.setState({filter: token})}>
+                    {token}
+                </a> : token + " "
         ));
     };
 
@@ -107,6 +144,19 @@ class App extends Component {
                         </div>
                     </div>
                 </div>
+
+                <div className="row">
+                    <div className="col-6 offset-3">
+                        {this.state.todoList.length > 0 ?
+                            <button className={`btn btn-outline-primary ${this.state.filter === 'all' ? 'active' : ''}`}
+                                    onClick={() => this.setState({filter: 'all'})}>All
+                            </button>
+                            : 'Please add some todos.'}
+                        {this.renderTags()}
+
+                    </div>
+                </div>
+
                 <div className="row">
                     <div className="col-6 offset-3">
                         <ul className="list-group list-group-flush">
