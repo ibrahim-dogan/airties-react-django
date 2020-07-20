@@ -6,6 +6,7 @@ import BootstrapSwitchButton from 'bootstrap-switch-button-react'
 import TimeAgo from 'javascript-time-ago'
 // Load locale-specific relative date/time formatting rules.
 import en from 'javascript-time-ago/locale/en'
+import {Button, Form, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader} from "reactstrap";
 
 // Add locale-specific relative date/time formatting rules.
 TimeAgo.addLocale(en);
@@ -13,12 +14,18 @@ const timeAgo = new TimeAgo('en-US');
 
 
 class App extends Component {
+
     constructor(props) {
         super(props);
         this.state = {
             newTaskInput: '',
             filter: 'all',
-            todoList: []
+            selectedItem: {},
+            modal: false,
+            authModal: true,
+            todoList: [],
+            auth: {},
+            signupOrLogin: 'login',
         };
     }
 
@@ -26,11 +33,31 @@ class App extends Component {
         this.refreshList();
     }
 
+    readLocalStorage = () => {
+        const username = localStorage.getItem('username');
+        const password = localStorage.getItem('password');
+        let auth = (username && password) ? {username, password} : false;
+        if (auth) {
+            this.setState({auth})
+        }
+        return auth
+    };
+
     refreshList = () => {
+        const localAuth = this.readLocalStorage();
         axios
-            .get("http://localhost:8000/api/tasks/")
-            .then(res => this.setState({todoList: res.data}))
-            .catch(err => console.log(err));
+            .get("http://localhost:8000/api/tasks/", {auth: localAuth ? localAuth : this.state.auth})
+            .then(res => {
+                localStorage.setItem('username', this.state.auth.username);
+                localStorage.setItem('password', this.state.auth.password);
+                this.setState({todoList: res.data, authModal: false})
+            })
+            .catch(err => {
+                console.log(err.response.status);
+                if (err.response.status === 401) {
+                    this.setState({authModal: true})
+                }
+            });
     };
     renderItems = () => {
         let {todoList} = this.state;
@@ -57,7 +84,7 @@ class App extends Component {
                     <div className="text-center time-ago">
                         <small>{timeAgo.format(new Date(item.created_at))}</small><br/>
                         <button type="button" className="btn btn-sm btn-link btn-delete"
-                                onClick={() => this.handleDelete(item)}><small>Delete</small></button>
+                                onClick={() => this.toggle(item)}><small>Delete</small></button>
                     </div>
 
                 </div>
@@ -76,7 +103,8 @@ class App extends Component {
         tags = new Set(tags);
         tags = [...tags];
         return tags.map((tag, index) => (
-            <button key={index} className={`ml-1 btn btn-sm btn-outline-primary ${this.state.filter === tag ? 'active' : ''}`}
+            <button key={index}
+                    className={`ml-1 btn btn-sm btn-outline-primary ${this.state.filter === tag ? 'active' : ''}`}
                     onClick={() => this.setState({filter: tag})}>{tag}
             </button>
         ));
@@ -96,24 +124,66 @@ class App extends Component {
     };
 
     handleSubmit = item => {
+        const localAuth = this.readLocalStorage();
         axios
-            .post("http://localhost:8000/api/tasks/", item)
-            .then(res => this.refreshList());
+            .post("http://localhost:8000/api/tasks/", item, {auth: localAuth ? localAuth : this.state.auth})
+            .then(res => this.refreshList())
+            .catch(err => {
+                console.log(err.response.status);
+                if (err.response.status === 401) {
+                    this.setState({authModal: true})
+                }
+            });
     };
     handleDone = item => {
+        const localAuth = this.readLocalStorage();
+
         item.is_completed = !item.is_completed;
         axios
-            .put(`http://localhost:8000/api/tasks/${item.id}/`, item)
-            .then(res => this.refreshList());
+            .put(`http://localhost:8000/api/tasks/${item.id}/`, item, {auth: localAuth ? localAuth : this.state.auth})
+            .then(res => this.refreshList())
+            .catch(err => {
+                console.log(err.response.status);
+                if (err.response.status === 401) {
+                    this.setState({authModal: true})
+                }
+            });
     };
     handleDelete = item => {
+        const localAuth = this.readLocalStorage();
+
+        this.setState({modal: false});
         axios
-            .delete(`http://localhost:8000/api/tasks/${item.id}`)
-            .then(res => this.refreshList());
+            .delete(`http://localhost:8000/api/tasks/${item.id}`, {auth: localAuth ? localAuth : this.state.auth})
+            .then(res => this.refreshList())
+            .catch(err => {
+                console.log(err.response.status);
+                if (err.response.status === 401) {
+                    this.setState({authModal: true})
+                }
+            });
     };
 
     handleChange = e => {
-        this.setState({temperature: e.target.value});
+        let {name, value} = e.target;
+
+        const auth = {...this.state.auth, [name]: value};
+        this.setState({auth});
+    };
+
+    handleAuth = () => {
+        const auth = this.state.auth;
+        if (this.state.signupOrLogin === 'login') {
+            this.refreshList()
+        } else {
+            axios.post("http://localhost:8000/api/users/", auth)
+                .then(res => {
+                    if (res.status === 201) {
+                        this.setState({auth: auth});
+                        this.refreshList()
+                    }
+                })
+        }
     };
 
     createItem = (event) => {
@@ -125,48 +195,111 @@ class App extends Component {
         }
     };
 
+    logout = () => {
+        localStorage.clear();
+        window.location.reload(false);
+    };
+
     render() {
         return (
             <div className="container-fluid text-dark">
-                <div className="row bg-light pl-5 pr-5 pt-1 pb-1 mb-3">
-                    <div className="col-8 offset-2">
-                        <div className="form-group mt-3">
-                            <input autoComplete="off" name="task" type="text" className="form-control"
-                                   value={this.state.newTaskInput}
-                                   onChange={(e) => {
-                                       this.setState({newTaskInput: e.target.value})
-                                   }}
-                                   onKeyDown={this.createItem}
-                                   placeholder="Task to be done.."/>
-                            <small className="form-text text-muted text-center"><b>🛎️ Tip:</b> Please
-                                press <kbd>↵</kbd> key to automaticly create a task.</small>
-                            <div className="invalid-feedback"></div>
+                {!this.state.authModal &&
+                <main>
+                    <div className="row bg-light pl-5 pr-5 pt-1 pb-1 mb-3">
+                        <div className="col-8 offset-2">
+                            <div className="form-group mt-3">
+                                <input autoComplete="off" name="task" type="text" className="form-control"
+                                       value={this.state.newTaskInput}
+                                       onChange={(e) => {
+                                           this.setState({newTaskInput: e.target.value})
+                                       }}
+                                       onKeyDown={this.createItem}
+                                       placeholder="Task to be done.. You can use #tag to tag your task."/>
+                                <small className="form-text text-muted text-center"><b>🛎️ Tip:</b> Please
+                                    press <kbd>↵</kbd> key to automaticly create a task. You can use #tag to tag your
+                                    task.</small>
+                                <p className='text-center mt-2'>Logged as {this.state.auth.username}
+                                    <span className='text-primary cursor-pointer'
+                                          onClick={this.logout}> logout</span>.</p>
+                                <div className="invalid-feedback"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="row">
-                    <div className="col-6 offset-3">
-                        {this.state.todoList.length > 0 ?
-                            <button className={`btn btn-outline-primary ${this.state.filter === 'all' ? 'active' : ''}`}
+                    <div className="row">
+                        <div className="col-6 offset-3">
+                            {this.state.todoList.length > 0 ?
+                                <button
+                                    className={`btn btn-outline-primary ${this.state.filter === 'all' ? 'active' : ''}`}
                                     onClick={() => this.setState({filter: 'all'})}>All
-                            </button>
-                            : 'Please add some todos.'}
-                        {this.renderTags()}
+                                </button>
+                                : 'Please add some todos.'}
+                            {this.renderTags()}
 
+                        </div>
                     </div>
-                </div>
 
-                <div className="row">
-                    <div className="col-6 offset-3">
-                        <ul className="list-group list-group-flush">
-                            {this.renderItems()}
-                        </ul>
+                    <div className="row">
+                        <div className="col-6 offset-3">
+                            <ul className="list-group list-group-flush">
+                                {this.renderItems()}
+                            </ul>
+                        </div>
                     </div>
-                </div>
+                </main>
+                }
+                {this.renderDeleteModal()}
+                {this.renderLoginModal()}
             </div>
         );
     }
+
+    renderDeleteModal() {
+        return (
+            <Modal isOpen={this.state.modal} toggle={this.toggle}>
+                <ModalHeader toggle={this.toggle}> Todo Item </ModalHeader>
+                <ModalBody>
+                    {this.state.selectedItem.task}
+                </ModalBody>
+                <ModalFooter>
+                    <Button color="danger" onClick={() => this.handleDelete(this.state.selectedItem)}>
+                        Remove
+                    </Button>
+                </ModalFooter>
+            </Modal>
+        );
+    }
+
+    renderLoginModal() {
+        return (
+            <Modal isOpen={this.state.authModal}>
+                <ModalBody>
+                    <h1 className={`d-inline cursor-pointer ${this.state.signupOrLogin === 'login' ? 'text-primary' : 'text-secondary'} `}
+                        onClick={() => this.setState({signupOrLogin: 'login'})}>Login</h1>
+                    <h1 className={`d-inline cursor-pointer ml-2 ${this.state.signupOrLogin === 'signup' ? 'text-primary' : 'text-secondary'} `}
+                        onClick={() => this.setState({signupOrLogin: 'signup'})}>Sign
+                        up</h1>
+                    <Form>
+                        <FormGroup>
+                            <Label for="username">Username</Label>
+                            <Input type="username" name="username" id="username"
+                                   onChange={this.handleChange}/>
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="password">Password</Label>
+                            <Input type="password" name="password" id="password"
+                                   onChange={this.handleChange}/>
+                        </FormGroup>
+                        <Button onClick={this.handleAuth}>Submit</Button>
+                    </Form>
+                </ModalBody>
+            </Modal>
+        );
+    }
+
+    toggle = (item) => {
+        this.setState({selectedItem: item, modal: !this.state.modal});
+    };
 }
 
 export default App;
